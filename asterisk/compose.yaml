@@ -3,13 +3,30 @@ services:
     image: andrius/asterisk:latest
     container_name: asterisk
     restart: unless-stopped
-    
+    # LAN_IP など環境ごとに違う値は .env に置く（.env.example をコピーして作る）
+    env_file: .env
+
+    # call/ と同じポート。同時起動はできない（切り替えて使う）
     ports:
       - "5070:5070/udp"
       - "20000-20020:20000-20020/udp"
     volumes:
-      - ./pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./pjsip.conf.template:/etc/asterisk/pjsip.conf.template:ro
       - ./pjsip_auth.conf:/etc/asterisk/pjsip_auth.conf:ro
       - ./extensions.conf:/etc/asterisk/extensions.conf:ro
       - ./rtp.conf:/etc/asterisk/rtp.conf:ro
       - ./logs:/var/log/asterisk
+
+    # 起動前にテンプレートから pjsip.conf を生成し、イメージ本来の entrypoint に引き継ぐ。
+    # envsubst に置換する変数名を明示しているのは、テンプレート内の他の $ を壊さないため。
+    # （$$ は compose 自身の変数展開を避けるエスケープ）
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        : "$${LAN_IP:?LAN_IP を .env に設定してください}"
+        envsubst '$${LAN_IP}' < /etc/asterisk/pjsip.conf.template > /etc/asterisk/pjsip.conf
+        exec /usr/local/bin/entrypoint.sh "$$@"
+      - --
+    # entrypoint を上書きするとイメージの既定 CMD も消えるので、元の値をそのまま書き直す
+    command: ["/usr/sbin/asterisk", "-vvvdddf", "-T", "-W", "-U", "asterisk", "-p"]
