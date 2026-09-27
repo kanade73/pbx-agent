@@ -1,15 +1,15 @@
 ; -----------------------------------------------------------------------------
 ;  PJSIP 設定テンプレート
-;  コンテナ起動時に envsubst で ${LAN_IP} を .env の値に置き換え、
+;  コンテナ起動時に envsubst で ${LAN_IP} ${SIP_PORT} を .env の値に置き換え、
 ;  /etc/asterisk/pjsip.conf を生成する（compose.yaml の entrypoint 参照）。
 ; -----------------------------------------------------------------------------
 
 ; 共通トランスポート設定
-; Zoiper の設定を call/ と共用するため、SIP ポートは call と同じ 5070 にしている
+; SIP ポートは .env の SIP_PORT（標準は 5060）
 [transport-udp]
 type=transport
 protocol=udp
-bind=0.0.0.0:5070
+bind=0.0.0.0:${SIP_PORT}
 ; Docker 越しでも SDP / Contact に Mac の LAN IP を載せる（載せないと無音になる）
 external_media_address=${LAN_IP}
 external_signaling_address=${LAN_IP}

@@ -3,21 +3,23 @@ services:
     image: andrius/asterisk:latest
     container_name: asterisk
     restart: unless-stopped
-    # LAN_IP など環境ごとに違う値は .env に置く（.env.example をコピーして作る）
+    # LAN_IP・ポートなど環境ごとに違う値は .env に置く（.env.example をコピーして作る）
     env_file: .env
 
-    # call/ と同じポート。同時起動はできない（切り替えて使う）
+    # SIP と RTP をホストに公開する。RTP は SDP で番号を相手に伝えるので、
+    # ホスト側とコンテナ側を同じ番号にしておく（ずらすと音声が届かない）。
+    # call/ と同じポートを使うので同時起動はできない（切り替えて使う）
     ports:
-      - "5070:5070/udp"
-      - "20000-20020:20000-20020/udp"
+      - "${SIP_PORT:-5060}:${SIP_PORT:-5060}/udp"
+      - "${RTP_PORT_START:-10000}-${RTP_PORT_END:-10020}:${RTP_PORT_START:-10000}-${RTP_PORT_END:-10020}/udp"
     volumes:
       - ./pjsip.conf.template:/etc/asterisk/pjsip.conf.template:ro
+      - ./rtp.conf.template:/etc/asterisk/rtp.conf.template:ro
       - ./pjsip_auth.conf:/etc/asterisk/pjsip_auth.conf:ro
       - ./extensions.conf:/etc/asterisk/extensions.conf:ro
-      - ./rtp.conf:/etc/asterisk/rtp.conf:ro
       - ./logs:/var/log/asterisk
 
-    # 起動前にテンプレートから pjsip.conf を生成し、イメージ本来の entrypoint に引き継ぐ。
+    # 起動前にテンプレートから pjsip.conf / rtp.conf を生成し、イメージ本来の entrypoint に引き継ぐ。
     # envsubst に置換する変数名を明示しているのは、テンプレート内の他の $ を壊さないため。
     # （$$ は compose 自身の変数展開を避けるエスケープ）
     entrypoint:
@@ -25,7 +27,9 @@ services:
       - -c
       - |
         : "$${LAN_IP:?LAN_IP を .env に設定してください}"
-        envsubst '$${LAN_IP}' < /etc/asterisk/pjsip.conf.template > /etc/asterisk/pjsip.conf
+        export SIP_PORT="$${SIP_PORT:-5060}" RTP_PORT_START="$${RTP_PORT_START:-10000}" RTP_PORT_END="$${RTP_PORT_END:-10020}"
+        envsubst '$${LAN_IP} $${SIP_PORT}' < /etc/asterisk/pjsip.conf.template > /etc/asterisk/pjsip.conf
+        envsubst '$${RTP_PORT_START} $${RTP_PORT_END}' < /etc/asterisk/rtp.conf.template > /etc/asterisk/rtp.conf
         exec /usr/local/bin/entrypoint.sh "$$@"
       - --
     # entrypoint を上書きするとイメージの既定 CMD も消えるので、元の値をそのまま書き直す
