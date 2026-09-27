@@ -1,0 +1,15 @@
+services:
+  asterisk:
+    image: andrius/asterisk:latest
+    container_name: asterisk
+    restart: unless-stopped
+    
+    ports:
+      - "5070:5070/udp"
+      - "20000-20020:20000-20020/udp"
+    volumes:
+      - ./pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./pjsip_auth.conf:/etc/asterisk/pjsip_auth.conf:ro
+      - ./extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./rtp.conf:/etc/asterisk/rtp.conf:ro
+      - ./logs:/var/log/asterisk
