@@ -1,0 +1,20 @@
+; -----------------------------------------------------------------------------
+;  SIP 認証設定のひな形
+;  cp pjsip_auth.conf.example pjsip_auth.conf して、password を書き換える。
+;  pjsip_auth.conf は .gitignore 済み（パスワードは git に入れない）。
+;  セクション名は pjsip.conf.template の auth=6001 / auth=6002 と一致させる。
+; -----------------------------------------------------------------------------
+
+; --- 内線 6001 (Mac の Zoiper) ---
+[6001]
+type=auth
+auth_type=userpass
+username=6001
+password=CHANGE_ME_6001
+
+; --- 内線 6002 (スマホの Zoiper) ---
+[6002]
+type=auth
+auth_type=userpass
+username=6002
+password=CHANGE_ME_6002
