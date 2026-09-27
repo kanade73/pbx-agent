@@ -289,9 +289,9 @@ async def handle_call(reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 async def main() -> None:
     """HOST:PORT で TCP を待ち受け、接続ごとに handle_call() を起動して、止めるまで動き続ける。"""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    log.info("STT モデル読み込み中 %s", stt.MODEL)
+    log.info("STT モデル読み込み中")
     await asyncio.to_thread(stt.warmup)
-    log.info("STT 準備完了")
+    log.info("STT 準備完了 %s", stt.backend().name)
     log.info("LLM 読み込み中 %s", llm.MODEL)
     await asyncio.to_thread(llm.warmup)
     log.info("LLM 準備完了")
